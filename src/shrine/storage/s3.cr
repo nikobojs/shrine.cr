@@ -2,6 +2,7 @@ require "./base"
 
 require "awscr-s3"
 require "content_disposition"
+require "uri"
 
 class Shrine
   module Storage
@@ -74,9 +75,16 @@ class Shrine
 
       # Returns the presigned URL to the file.
       def url(id : String, **options) : String
+        host_name : String?
+        if endpoint = client.@endpoint
+          parsed_uri = URI.parse endpoint
+          host_name = parsed_uri.host
+        end
+
         presigned_options = Awscr::S3::Presigned::Url::Options.new(
           aws_access_key: client.@aws_access_key,
           aws_secret_key: client.@aws_secret_key,
+          host_name: host_name,
           region: client.@region,
           object: "/#{object_key(id)}",
           bucket: bucket,
